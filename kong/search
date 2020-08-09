@@ -1,8 +1,6 @@
 kong
 konga: kong dashboard
 
-
-
 kong knowledge
 ####################################
 
@@ -164,6 +162,7 @@ curl kongip:kong-proxy-port/prefix
 localhost:1337
 
 # first config on konga
+# 注意： konga 上 设置 的变量 要点击 回车
 1、connections to kong admin api 8001
 2、open connections healthy check
 

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-postgresql
+  namespace: live-kong
+  labels:
+    app: live-postgresql
+    database: postgresql
+spec:
+  selector:
+    matchLabels:
+      app: live-postgresql
+  template:
+    metadata:
+      labels:
+        app: live-postgresql
+    spec:
+      containers:
+      - name: live-postgresql
+        image: "postgres:9.6"
+        imagePullPolicy: "IfNotPresent"
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2048Mi
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_DB
+          value: "live-kong"
+        - name: POSTGRES_PASSWORD
+          value: "ek5xN1dMeHZvY0k3"
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        ports:
+        - name: postgresql
+          containerPort: 5432
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: live-postgresql
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: live-postgresql
+  namespace: live-kong
+  labels:
+    app: live-postgresql
+spec:
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: live-postgresql

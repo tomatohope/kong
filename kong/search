@@ -1,0 +1,205 @@
+kong
+konga: kong dashboard
+
+
+
+kong knowledge
+####################################
+
+* official-site: https://getkong.org/
+* github:        https://github.com/Mashape/kong
+* install:       https://konghq.com/install/?itm_source=website&itm_medium=nav
+* kong-admin-api:https://docs.konghq.com/2.1.x/admin-api/
+
+开源的API Gateway、 基于OpenResty+Lua，继承了动态路由
+熔断、健康检查、日志(HTTP tcp udp 请求响应)
+鉴权、黑白名单、SSL、监控、认证、限流、Rest API 进行配置管理、分布式
+高性能,后端nginx
+Kong 是基于 OpenResty，Kong 的相当于是 Nginx 的plus。 Kong = OpenResty + Nginx + Lua
+
+
+外部访问过程：域名-----> DNS-----> 内部服务网关 -----> 微服务
+
+微服务实现原理，调用关系：
+
+        仓储 <---- 订单 ----> 库存
+		            |
+					|
+                   \ /
+				   积分
+
+
+
+服务内部请求调用：
+订单微服务 ----------集群配置中心(服务名、IP、端口;eureka、zookeeper、etcd)--------->负载均衡 负载算法Ribbo--------->建立连接，返回请求 动态代理(Feign)--------->熔断、降级(降级时记录没有操作的记录等恢复再操作)---------> 库存微服务
+
+
+服务外部请求调用：
+微服务网关路由 zuul、kong
+
+
+
+zuul、kong 微服务网关--------> 微服务(订单微服务)
+
+
+## konga feature
+多用户管理
+管理多个Kong节点: kong 集群，指向同一数据库
+电子邮件异常信息通知
+管理所有Kong Admin API
+使用快照备份，还原和迁移Kong节点  Snapshots Snapshot and export json
+恢复：add connection -----> Snapshots restore
+使用运行状况检查监控节点和API状态
+轻松的数据库集成（MySQL，postgresSQL，MongoDB）
+
+
+kong arch
+####################################
+
+database ----- kong ----- web(konga)
+
+database: 数据中心用于存储Kong集群节点信息、API、消费者、插件等信息，目前提供了PostgreSQL和Cassandra支持，如果需要高可用建议使用Cassandra
+client port: http 8000 https 8443
+admin api:   http 8001 https 8444
+updateconfig； api(信息获取使用: GET 创建：POST 更新：PATCH 删除：DELETE)
+
+ * admin: restful api<-->kong server<-(cache)-->db
+ * client:port--->[kong server<--(cache)-->db]-->api
+
+client---------->auth monitor loggin ssl acl cache rate-limit serverless----------> api
+
+kong config : konga Snapshot
+
+
+kong deploy by k8s
+####################################
+kong-deploy-by-k8s
+
+kong deploy by docker
+####################################
+
+https://konghq.com/get-started/#install
+
+kong
+pgsql
+konga
+
+#### install by docker
+https://docs.konghq.com/install/docker/?_ga=2.132267724.339927632.1596598966-119902890.1596598966
+
+docker network create kong-net
+docker pull   postgres:9.6
+docker pull kong
+docker pull pantsel/konga:latest
+
+# prepare kong db
+    docker run -d --name kong-database \
+                   --network=kong-net \
+                   -p 5432:5432 \
+                   -e "POSTGRES_USER=kong" \
+                   -e "POSTGRES_DB=kong" \
+                   -e "POSTGRES_PASSWORD=kong" \
+                   postgres:9.6
+
+
+#migrate kong db
+docker run --rm \
+     --network=kong-net \
+     -e "KONG_DATABASE=postgres" \
+     -e "KONG_PG_HOST=kong-database" \
+     -e "KONG_PG_USER=kong" \
+     -e "KONG_PG_PASSWORD=kong" \
+     -e "KONG_CASSANDRA_CONTACT_POINTS=kong-database" \
+     kong:latest kong migrations bootstrap
+
+#start kong
+  docker run -d --name kong \
+     --network=kong-net \
+     -e "KONG_DATABASE=postgres" \
+     -e "KONG_PG_HOST=kong-database" \
+     -e "KONG_PG_USER=kong" \
+     -e "KONG_PG_PASSWORD=kong" \
+     -e "KONG_CASSANDRA_CONTACT_POINTS=kong-database" \
+     -e "KONG_PROXY_ACCESS_LOG=/dev/stdout" \
+     -e "KONG_ADMIN_ACCESS_LOG=/dev/stdout" \
+     -e "KONG_PROXY_ERROR_LOG=/dev/stderr" \
+     -e "KONG_ADMIN_ERROR_LOG=/dev/stderr" \
+     -e "KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl" \
+     -p 8000:8000 \
+     -p 8443:8443 \
+     -p 192.168.10.215:8001:8001 \
+     -p 192.168.10.215:8444:8444 \
+     kong:latest
+
+
+# test
+curl -i http://localhost:8001/
+curl -i http://192.168.10.215:8001/
+curl -i http://localhost:8001/services
+
+
+# start konga
+docker run -d \
+-p 1337:1337 \
+--network kong-net \
+-e "TOKEN_SECRET=kongtoken" \
+-e "DB_ADAPTER=postgres" \
+-e "DB_HOST=kong-database" \
+-e "DB_USER=kong"  \
+-e "DB_PASSWORD=kong" \
+ --name konga \
+pantsel/konga
+
+
+
+kong config
+####################################
+
+# relationship
+route ----> service ----> upstream ----> target
+curl kongip:kong-proxy-port/prefix
+如上的访问方式, kong作为网关，通过后缀 prefix ，路由到不同的 service
+
+# konga default port
+localhost:1337
+
+# first config on konga
+1、connections to kong admin api 8001
+2、open connections healthy check
+
+1、add default connection to kong admin && active && all configuration of connection will be saved into kong db
+2、add service
+url: http://webgroup
+Name：可以随便填，但是建议填某个有意义的名称比如为某个微服务的名称。
+Description：就是一个描述信息，可以不填，建议填微服务的中午描述。
+Tags：标签，可以填多个，填一个需要按一个回车确定，这个可以不填。
+Url：这个需要注意一下，因为这个比较重要，这个其实是下面四个的合体，填了这个，下面的四个不需要填  webgroup
+Protocol：请求协议，可选值：http，https。
+Host：目标域名，这里可以是一个内部域名或者直接可以访问的地址，如果是内部域名，则需要匹配有相关的upstream，若是外部可以访问的地址，则不需要配置upstream。
+Port：端口
+Path：访问路径，也就是若匹配upstream后自动添加的路径。
+3、add route
+   click service ----> add route
+   path : /web
+  Name：这个可以不填，若不填，konga会默认生成一个随机字符串。
+  重点关注Hosts，Paths，Methods这三个属性，这三个是主要的属性。这三个属性必须三选一，也就是路由匹配规则。
+  Hosts这个是匹配访问的域名，这一般是配置为二级域名，比如配置为 blog.github.com ，若在以这个域名访问，则匹配成功，可以填多个，这里注意填完一个后需要按回车键确定。
+  Paths属性，这个用的最多，就是根据路径匹配，比如配置为/konga,则访问如 www.xxxx.com/konga 则匹配成功。  /web
+  Methods换个就是http请求方法，比如get，post这些。
+  Strip Path：这个属性也需要注意一下，就是当path匹配时，是否去掉，如果打开，则去掉，比如上面所说的/konga，访问后面的host时，则不会带上/konga。
+  Preserve Host：这个选项的意思是真是请求host时是否保留，如果保留，则请求的的header里面的来源为原始来源，否则为service中定义的host。
+
+4、add target
+   click upstream ----> add target
+   upstream name == "service's url"
+   webgroup
+
+5、test
+http://192.168.0.103:31366/web
+
+6、认证 配置示例
+6-1、config consumers by konga
+    detail\group、credentials
+6-2、config service: add plugin
+    enable basic-auth
+

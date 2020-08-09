@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-kong
+  namespace: live-kong
+  labels:
+    app: live-kong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: live-kong
+  template:
+    metadata:
+      labels:
+        app: live-kong
+    spec:
+      containers:
+      - name: live-kong
+        image: "192.168.0.121:5000/basic/kong"
+        imagePullPolicy: "IfNotPresent"
+      imagePullSecrets:
+        - name: harborsecretname
+        ports:
+        - name: kong-admin
+          containerPort: 8001
+        - name: kong-proxy
+          containerPort: 8000
+        - name: kong-proxy-ssl
+          containerPort: 8443
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        env:
+        - name: KONG_DATABASE
+          value: "postgres"
+        - name: KONG_PG_DATABASE
+          value: "live-kong"
+        - name: KONG_PG_HOST
+          value: "192.168.0.121"
+        - name: KONG_PG_PASSWORD
+          value: "ek5xN1dMeHZvY0k3"
+        - name: KONG_PG_USER
+          value: "live-kong"
+        - name: KONG_PG_PORT
+          value: "5432"
+        - name: KONG_PROXY_ACCESS_LOG
+          value: "/usr/local/kong/kong-proxy-access.log"
+        - name: KONG_ADMIN_ACCESS_LOG
+          value: "/dev/stdout"
+        - name: KONG_PROXY_ERROR_LOG
+          value: "/usr/local/kong/kong-proxy-error.log"
+        - name: KONG_ADMIN_ERROR_LOG
+          value: "/dev/stderr"
+        - name: KONG_ADMIN_LISTEN
+          value: "0.0.0.0:8001"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: live-kong
+  namespace: live-kong
+  labels:
+    app: live-kong
+spec:
+  type: NodePort
+  ports:
+  - name: kong-admin
+    port: 8001
+    targetPort: 8001
+  - name: kong-proxy
+    port: 8000
+    targetPort: 8000
+  - name: kong-proxy-ssl
+    port: 8443
+    targetPort: 8443
+  selector:
+    app: live-kong

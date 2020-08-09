@@ -1,0 +1,65 @@
+#### arch
+
+pgsql<----->kong<----konga
+
+#### image prepare
+docker pull postgres:9.6
+docker pull kong
+docker pull pantsel/konga
+
+####storage prepare pvc
+## 公司用的 aliyun 的 pgsql
+    kong-deployment.yml
+    konga-deplyment.yml
+
+storage -----> pv -----> storage class、Provisioner -----> pvc -----> pods
+###自动建pv、动态PV: 存储插件 + pvc
+storage: nfs prepare
+
+## nfs server
+yum -y install nfs-utils
+vim /etc/exports
+#nfs_dir      allow ip range
+/nfs/data/    10.244.0.0/16(rw,no_root_squash)
+/nfs/data/    192.168.10.0/24(rw,no_root_squash)
+systemctl restart nfs
+systemctl enable nfs
+
+## nfs client
+yum -y install nfs-utils
+mount -t nfs 192.168.10.242:/nfs/data /nfs/data
+vim /etc/rc.d/rc.local
+    mount -t nfs 192.168.10.242:/nfs/data /nfs/data
+
+##k8s nfs plugins
+\\ https://www.cnblogs.com/jojoword/p/12341128.html
+https://github.com/kubernetes-incubator/external-storage.git
+cd external-storage/nfs-client/deploy
+vi pgsql-rbac.yaml
+    update namespace
+vi pgsql-provisioner.yml
+    update namespace
+vi pgsql-class.yml
+    update namespace
+
+kubectl apply pgsql-rbac.yaml
+kubectl apply pgsql-provisioner.yml
+kubectl apply pgsql-class.yml
+
+vi pgsql-pvc.yml
+kubectl apply pgsql-pvc.yml
+
+## prepare pgsql
+暂时不用
+\\1、pgsql.yml
+\\2-1-1、kong-use-pvc-initdb.yml
+\\2-1-2、kong-use-pvc.yml
+
+\\ 直接使用外部pgsql
+1、kong-initdb.yml
+2、kong.yml
+3、konga.yml \\ 公司的 gonga 数据库用的 aliyun mysql ; 这里使用数据库可以使得数据持久化
+
+
+#### kong  konga使用 备份
+

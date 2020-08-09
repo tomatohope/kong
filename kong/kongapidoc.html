@@ -1,0 +1,150 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <title></title>
+<style id="system" type="text/css">h1,h2,h3,h4,h5,h6,p,blockquote {    margin: 0;    padding: 0;}body {    font-family: "Helvetica Neue", Helvetica, "Hiragino Sans GB", Arial, sans-serif;    font-size: 13px;    line-height: 18px;    color: #737373;    margin: 10px 13px 10px 13px;}a {    color: #0069d6;}a:hover {    color: #0050a3;    text-decoration: none;}a img {    border: none;}p {    margin-bottom: 9px;}h1,h2,h3,h4,h5,h6 {    color: #404040;    line-height: 36px;}h1 {    margin-bottom: 18px;    font-size: 30px;}h2 {    font-size: 24px;}h3 {    font-size: 18px;}h4 {    font-size: 16px;}h5 {    font-size: 14px;}h6 {    font-size: 13px;}hr {    margin: 0 0 19px;    border: 0;    border-bottom: 1px solid #ccc;}blockquote {    padding: 13px 13px 21px 15px;    margin-bottom: 18px;    font-family:georgia,serif;    font-style: italic;}blockquote:before {    content:"C";    font-size:40px;    margin-left:-10px;    font-family:georgia,serif;    color:#eee;}blockquote p {    font-size: 14px;    font-weight: 300;    line-height: 18px;    margin-bottom: 0;    font-style: italic;}code, pre {    font-family: Monaco, Andale Mono, Courier New, monospace;}code {    background-color: #fee9cc;    color: rgba(0, 0, 0, 0.75);    padding: 1px 3px;    font-size: 12px;    -webkit-border-radius: 3px;    -moz-border-radius: 3px;    border-radius: 3px;}pre {    display: block;    padding: 14px;    margin: 0 0 18px;    line-height: 16px;    font-size: 11px;    border: 1px solid #d9d9d9;    white-space: pre-wrap;    word-wrap: break-word;}pre code {    background-color: #fff;    color:#737373;    font-size: 11px;    padding: 0;}@media screen and (min-width: 768px) {    body {        width: 748px;        margin:10px auto;    }}</style><style id="custom" type="text/css"></style></head>
+<body><h2>常用端口</h2>
+<h4>client</h4>
+<p>8000：此端口是Kong用来监听来自客户端的HTTP请求的，并将此请求转发到您的上游服务。这也是本教程中最主要用到的端口。
+8443：此端口是Kong监听HTTP的请求的端口。该端口具有与8000端口类似的行为，但是它只监听HTTPS的请求，并不会产生转发行为。可以通过配置文件来禁用此端口。
+</p>
+<h4>admin</h4>
+<p>8001：用于管理员对KONG进行配置的端口。<br>8444：用于管理员监听HTTPS请求的端口。
+
+</p>
+<hr>
+<p>在kong中,每次添加配置都会返回一个唯一id,比如添加api,添加consumer,为api添加插件,为consumer添加key等等,
+唯一id的作用是能更方便的修改,删除配置
+
+</p>
+<hr>
+<h2>添加一个API</h2>
+<p>有三种请求方式<br>1.POST请求是添加<br>2.PATCH请求是修改<br>3.PUT请求是新增或修改  
+</p>
+<h4>主要参数:</h4>
+<p>name是api名字,upstream_url是后端API地址.<br>hosts,uris,methods这三个最少要有一个,用来区分API.  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X POST http://localhost:8001/apis/ \
+    -d 'name={ name }' \
+    -d 'upstream_url=http://my-api.com' \
+    -d 'hosts=example.com' \
+    -d 'uris={ uris ,例子:/my-api }' \
+    -d 'methods={ methods, 例子:GET,HEAD }'</code></pre>
+<hr>
+<h2>请求一个API</h2>
+<h4>主要参数:</h4>
+<p>uris,hosts,和method,根据你添加api时的参数填入,没有则不填
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X { methods } http://localhost:8000/{ uris } \
+    -d 'hosts={ example.com }'</code></pre>
+<hr>
+<h2>删除一个API</h2>
+<h4>主要参数:</h4>
+<p>name,或创建API时返回的id  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X DELETE http://localhost:8001/apis/{ name或者id }</code></pre>
+<hr>
+<h2>创建一个consumer</h2>
+<p>有三种请求方式<br>1.POST请求是添加<br>2.PATCH请求是修改<br>3.PUT请求是新增或修改  
+</p>
+<h4>主要参数:</h4>
+<p>username和custom_id.<br>custom_id可选,可用于在您现有的数据库中映射与用户的关系.
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X POST http://localhost:8001/consumers/ \
+    -d 'username=hahahha' \
+    -d 'custom_id=mid33'</code></pre>
+<hr>
+<h2>查看consumer信息</h2>
+<h4>主要参数:</h4>
+<p>username, 或创建consumer时返回的id,
+如果不填就会返回所有consumer成员信息
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X GET http://localhost:8001/consumers/{ username或者id }</code></pre>
+<hr>
+<h2>删除一个consumer</h2>
+<h4>主要参数:</h4>
+<p>username,或创建consumer时返回的id  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X DELETE http://localhost:8001/consumer/{ username或者id }</code></pre>
+<hr>
+<h2>为api启用key-auth插件</h2>
+<h4>主要参数:</h4>
+<p>key_name,该参数用来控制client访问api时header认证参数名,可选参数,不指定默认为apikey<br>api_id,该参数用来指定插件生效的api对象,可选参数,不指定对所有api生效
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X PUT http://localhost:8001/plugins \
+    -d 'name=key-auth' \
+    -d 'config.key_names={ key_names }' \
+    -d 'api_id={ api_id }'</code></pre>
+<hr>
+<h2>为consuemr创建认证key</h2>
+<h4>主要参数:</h4>
+<p>key,即认证秘钥,可选参数,不指定默认会自动生成<br>一个consumer可以拥有多个key, 可选参数,  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X POST http://localhost:8001/consumers/{ username或者id }/key-auth \
+    -d 'key={ key }'</code></pre>
+<hr>
+<h2>查看consumer的key列表</h2>
+<h4>主要参数:</h4>
+<p>username,或创建consumer时返回的id  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X GET http://localhost:8001/consumers/{ username或者id }/key-auth</code></pre>
+<hr>
+<h2>删除consumer的key</h2>
+<h4>主要参数:</h4>
+<p>username,或创建consumer时返回的id<br>以及创建key时返回的id  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X DELETE http://localhost:8001/consumers/{ username或者id }/key-auth/{ id }</code></pre>
+<hr>
+<h2>使用key请求api</h2>
+<h4>主要参数:</h4>
+<p>uris,hosts,和method,根据你添加api时的参数填入,没有则不填<br>config.key_names为添加插件时创建的header参数名字,默认为apikey<br>key是给consumer添加的key  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X { methods } http://localhost:8000/{ uris } \
+    -d 'hosts={ example.com }' \
+    -d '{ config.key_names }={ key }'</code></pre>
+<hr>
+<h2>为consumer添加acl插件并创建group</h2>
+<h4>主要参数:</h4>
+<p>username,或创建consumer时返回的id,以及group名字<br>同一个consumer可以添加多个group  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X POST http://localhost:8001/consumers/{ username或者id }/acls \
+    -d 'group={ group名字 }'</code></pre>
+<hr>
+<h2>为consumer删除一个group</h2>
+<h4>主要参数:</h4>
+<p>要删除的group名字  
+</p>
+<h4>Example"</h4>
+<pre><code class="lang-javascript">curl -i -X DELETE http://localhost:8001/consumers/mid01/acls/{ group名字 }</code></pre>
+<hr>
+<h2>为api设置acl白名单</h2>
+<h4>主要参数:</h4>
+<p>api_id,创建api时返回的参数,可选参数,不填则会适配所有api<br>groupname是为consumer创建的group的name.可以填多个组,逗号分隔,例如test1,test2  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X PUT/POST http://localhost:8001/plugins \
+    -d 'api_id={ api_id }' \
+    -d 'name=acl' \
+    -d 'config.whitelist={ groupname }'</code></pre>
+<p>修改设置,只需要重新请求即可
+
+</p>
+<hr>
+<h2>删除api的acl白名单</h2>
+<h4>主要参数:</h4>
+<p>给api设置acl时返回的id  
+</p>
+<h4>Example:</h4>
+<pre><code class="lang-javascript">curl -i -X DELETE http://localhost:8001/plugins/{ id }</code></pre>
+</body></html>

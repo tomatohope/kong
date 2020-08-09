@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-konga
+  namespace: live-kong
+  labels:
+    app: live-konga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: live-konga
+  template:
+    metadata:
+      labels:
+        app: live-konga
+    spec:
+      imagePullSecrets:
+        - name: harborsecretname
+      containers:
+      - name: live-konga
+        image: "192.168.0.121:5000/basic/konga"
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - name: konga-web
+          containerPort: 1337
+        resources:
+          limits:
+            cpu: 400m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        env:
+        - name: TOKEN_SECRET
+          value: "sUJ4WL7h1W2gQExe"
+        - name: DB_ADAPTER
+          value: "postgres"
+        - name: DB_HOST
+          value: "192.168.0.121"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "live-konga"
+        - name: DB_DATABASE
+          value: "live-konga"
+        - name: DB_PASSWORD
+          value: "9Qva9UdTF0GlfDI9"
+#        - name: NODE_ENV
+#          value: "development"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: live-konga
+  namespace: live-kong
+  labels:
+    app: live-konga
+spec:
+  type: NodePort
+  ports:
+  - name: konga-web
+    port: 1337
+    targetPort: 1337
+  selector:
+    app: live-konga

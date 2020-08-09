@@ -192,6 +192,7 @@ Path：访问路径，也就是若匹配upstream后自动添加的路径。
    click upstream ----> add target
    upstream name == "service's url"
    webgroup
+   并打开 healthy check
 
 5、test
 http://192.168.0.103:31366/web

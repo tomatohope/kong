@@ -164,6 +164,9 @@ localhost:1337
 # first config on konga
 # 注意： konga 上 设置 的变量 要点击 回车
 1、connections to kong admin api 8001
+
+	when depoyed by k8s eg service name: http://live-kong:8001
+
 2、open connections healthy check
 
 1、add default connection to kong admin && active && all configuration of connection will be saved into kong db

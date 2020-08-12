@@ -11,7 +11,7 @@ kong knowledge
 
 开源的API Gateway、 基于OpenResty+Lua，继承了动态路由
 熔断、健康检查、日志(HTTP tcp udp 请求响应)
-鉴权、黑白名单、SSL、监控、认证、限流、Rest API 进行配置管理、分布式
+鉴权、黑白名单、SSL、监控、认证、限流(redis 实现)、Rest API 进行配置管理、分布式
 高性能,后端nginx
 Kong 是基于 OpenResty，Kong 的相当于是 Nginx 的plus。 Kong = OpenResty + Nginx + Lua
 

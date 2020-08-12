@@ -199,6 +199,8 @@ Path：访问路径，也就是若匹配upstream后自动添加的路径。
 
 5、test
 http://192.168.0.103:31366/web
+当然，这里可以用 nginx 反向代理，在 konga service里 的 route 里 配置 好 host来访问
+
 
 6、认证 配置示例
 6-1、config consumers by konga

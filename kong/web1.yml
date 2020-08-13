@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hope-nginx-web1
+  namespace: hope
+  labels:
+    app: hope-nginx-web1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hope-nginx-web1
+  template:
+    metadata:
+      labels:
+        app: hope-nginx-web1
+    spec:
+      imagePullSecrets:
+        - name: harborsecretname
+      containers:
+      - name: hope-nginx-web1
+        image: "192.168.10.215:5000/basic/web1"
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - name: hope-nginx-web1
+          containerPort: 80
+        resources:
+          limits:
+            cpu: 400m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: hope-nginx-web1-svc
+  namespace: hope
+  labels:
+    app: hope-nginx-web1-svc
+spec:
+  ports:
+  - name: hope-nginx-web1
+    port: 80
+    targetPort: 80
+  selector:
+    app: hope-nginx-web1
